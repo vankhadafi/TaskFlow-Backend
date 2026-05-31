@@ -38,39 +38,44 @@ const authenticateToken = (req, res, next) => {
 };
 
 // ==========================================
-// SETUP DATABASE
+// SETUP DATABASE (RESET TABEL)
 // ==========================================
 app.get('/api/setup', (req, res) => {
-  const queryCreateUsers = `
-    CREATE TABLE IF NOT EXISTS users (
-        id VARCHAR(50) PRIMARY KEY,
-        username VARCHAR(100) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL
-    )
-  `;
-  
-  const queryCreateTasks = `
-    CREATE TABLE IF NOT EXISTS tasks (
-        id VARCHAR(50) PRIMARY KEY,
-        userId VARCHAR(50) NOT NULL,
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        status VARCHAR(50) DEFAULT 'todo',
-        priority VARCHAR(50) DEFAULT 'medium',
-        deadline DATE NULL,
-        category VARCHAR(100),
-        createdAt VARCHAR(50),
-        updatedAt VARCHAR(50),
-        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `;
-  
-  db.query(queryCreateUsers, (err1) => {
-    if (err1) return res.status(500).json({ error: 'Gagal buat tabel users: ' + err1.message });
+  // PERHATIAN: Menghapus tabel tasks lama agar struktur baru (dengan userId) bisa dibuat tanpa bentrok
+  db.query('DROP TABLE IF EXISTS tasks', (errDrop) => {
+    if (errDrop) return res.status(500).json({ error: 'Gagal mereset tabel tasks: ' + errDrop.message });
+
+    const queryCreateUsers = `
+      CREATE TABLE IF NOT EXISTS users (
+          id VARCHAR(50) PRIMARY KEY,
+          username VARCHAR(100) UNIQUE NOT NULL,
+          password VARCHAR(255) NOT NULL
+      )
+    `;
     
-    db.query(queryCreateTasks, (err2) => {
-      if (err2) return res.status(500).json({ error: 'Gagal buat tabel tasks: ' + err2.message });
-      res.json({ message: 'Tabel users dan tasks berhasil dibuat/diperbarui!' });
+    const queryCreateTasks = `
+      CREATE TABLE IF NOT EXISTS tasks (
+          id VARCHAR(50) PRIMARY KEY,
+          userId VARCHAR(50) NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          description TEXT,
+          status VARCHAR(50) DEFAULT 'todo',
+          priority VARCHAR(50) DEFAULT 'medium',
+          deadline DATE NULL,
+          category VARCHAR(100),
+          createdAt VARCHAR(50),
+          updatedAt VARCHAR(50),
+          FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `;
+    
+    db.query(queryCreateUsers, (err1) => {
+      if (err1) return res.status(500).json({ error: 'Gagal buat tabel users: ' + err1.message });
+      
+      db.query(queryCreateTasks, (err2) => {
+        if (err2) return res.status(500).json({ error: 'Gagal buat tabel tasks: ' + err2.message });
+        res.json({ message: 'Tabel database berhasil di-reset dan siap digunakan!' });
+      });
     });
   });
 });
