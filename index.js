@@ -5,7 +5,14 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-app.use(cors());
+
+// Konfigurasi CORS yang lebih kuat
+app.use(cors({
+  origin: '*', // Mengizinkan akses dari mana saja (termasuk Live Server)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // Kunci rahasia untuk JWT (Sebaiknya gunakan Environment Variable di Vercel nanti)
